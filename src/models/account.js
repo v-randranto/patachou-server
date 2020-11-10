@@ -5,8 +5,9 @@ const mongoose = require('mongoose');
 const accountSchema = mongoose.Schema({
   pseudo: { type: String, required: true },
   password: { type: String, required: true },
-  salt: { type: String, required: true },
-  pwdExpiringDate: { type: Date, default: '01/01/2100' },
+  salt: { type: String },
+  pwdExpiringDate: { type: Date, required: true, default: '01/01/2100' },
+  presentation: { type: String, required: true, default: 'Pas de présentation' },
   email: { type: String, required: true },
   isAdmin: { type: Boolean, required: true, default: false },
   creationDate: { type: Date, default: Date.now },

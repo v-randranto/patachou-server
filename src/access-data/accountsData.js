@@ -5,6 +5,51 @@ const { logging } = require('../utils/loggingHandler');
 // eslint-disable-next-line no-undef
 const { base } = require('path').parse(__filename);
 
+exports.find = (sessionID, param) => {
+  logging('info', base, sessionID, 'Starting finding accounts...', JSON.stringify(param.query));
+  return new Promise((resolve, reject) => {
+    Account.find(param.query, param.fields).sort({pseudo: 1})
+    .then((accounts) => {
+      if (accounts.length) {        
+        logging('info', base, sessionID, `Finding accounts successful !`);
+        // TODO formatter les accounts avant de les retourner
+        resolve(accounts);
+      } else {
+        logging('info', base, sessionID, 'No account found !');
+        resolve(false)
+      }
+    })
+    .catch((error) => {
+      logging('error', base, sessionID, 'Finding accounts failed !');
+      reject(error);
+    });
+  });
+  
+};
+
+exports.findOne = (sessionID, param) => {
+  logging('info', base, sessionID, 'Starting finding account...', JSON.stringify(param.query));
+  return new Promise((resolve, reject) => {
+    Account.findOne(param.query, param.fields)
+    .then((account) => {
+      if (account) {        
+        logging('info', base, sessionID, `Finding one account successful !`);
+        // TODO formatter les accounts avant de les retourner
+        console.log('found account', account)
+        resolve(account);
+      } else {
+        logging('info', base, sessionID, 'No account found !');
+        resolve(false)
+      }
+    })
+    .catch((error) => {
+      logging('error', base, sessionID, 'Finding accounts failed !');
+      reject(error);
+    });
+  });
+  
+};
+
 exports.addOne = (sessionID, account) => {
   
   logging('info', base, sessionID, 'Starting saving account...', JSON.stringify(account));
@@ -23,30 +68,6 @@ exports.addOne = (sessionID, account) => {
     });  
   });
    
-};
-
-exports.find = (sessionID, param) => {
-
-  logging('info', base, sessionID, 'Starting finding accounts...', JSON.stringify(param.query));
-
-  return new Promise((resolve, reject) => {
-    Account.find(param.query, param.fields).sort({lastName: 1})
-    .then((accounts) => {
-      if (accounts.length) {        
-        logging('info', base, sessionID, `Finding accounts successful !`);
-        // TODO formatter les accounts avant de les retourner
-        resolve(accounts);
-      } else {
-        logging('info', base, sessionID, 'No account found !');
-        resolve(false)
-      }
-    })
-    .catch((error) => {
-      logging('error', base, sessionID, 'Finding accounts failed !');
-      reject(error);
-    });
-  });
-  
 };
 
 exports.update = (sessionID, param) => {

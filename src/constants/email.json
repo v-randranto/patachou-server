@@ -1,0 +1,19 @@
+{
+  "REGISTER": {
+    "subject": "Confirmation de votre inscription sur Patachou",
+    "text": "Nous nous faisons une joie de vous compter parmi les becs sucrés de Patachou.","signature": "https://patachou.herokuapp.com/<br><br>A bientôt!<br>L'équipe Patachou."
+  },
+
+  "REQUEST": {
+    "subject": "Votre demande d'ajout d'ami sur Patachou",
+    "text": "Vous avez reçu une demande d'ajout d'ami",
+    "signature": "https://patachou.herokuapp.com/<br><br>A bientôt!<br>L'équipe Patachou."
+  },
+
+  "PASSWORD": {
+    "subject": "Réinitialisation du mot de passe sur Patachou",
+    "text1": "Voici votre mot de passe provisoire:",
+    "text2": "Il est valide pour une durée de 2h. Après connexion il faudra le modifier dans votre profil.",
+    "signature": "https://patachou.herokuapp.com/<br><br>A bientôt!<br>L'équipe Patachou."
+  }
+}

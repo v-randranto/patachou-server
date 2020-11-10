@@ -16,7 +16,7 @@ const httpStatusCodes = require('../src/constants/httpStatusCodes.json');
 
 const accountsRouter = require('./routes/accounts');
 const PATH_STATIC_FILES = 'dist/patachou-client/';
-const ACCOUNTS_API_PATH = '/api/account';
+const ACCOUNTS_API_PATH = '/api/accounts/';
 
 const app = express();
 app.use(helmet());

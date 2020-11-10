@@ -14,57 +14,80 @@ const httpStatusCodes = require('../constants/httpStatusCodes.json');
 const { logging } = require('../utils/loggingHandler');
 const accountsData = require('../access-data/accountsData');
 
-/*====================================================================================*
- * requête d'un compte
- *=====================================================================================*/
-
 const findAccounts = (req, res, param) => {
-
+  logging('info', base, req.sessionID, `Starting finding accounts `);
   accountsData
-  .find(req.sessionID, param)
-  .then((accounts) => {
-    if (accounts.length) {
+    .find(req.sessionID, param)
+    .then((accounts) => {
+      if (accounts.length) {
+        logging(
+          'info',
+          base,
+          req.sessionID,
+          `${accounts.lentgh} Accounts found !`
+        );
+      } else {
+        logging('info', base, req.sessionID, `No account !`);
+      }
+      res.status(httpStatusCodes.OK).json(accounts);
+    })
+    .catch((error) => {
       logging(
-        'info',
+        'error',
         base,
         req.sessionID,
-        `${accounts.lentgh} Accounts found !`
+        `Getting accounts with query ${param} failed ! `,
+        JSON.stringify(error)
       );
-    } else {
-      logging('info', base, req.sessionID, `No account !`);
-    }
-    res.status(httpStatusCodes.OK).json(accounts);
-  })
-  .catch((error) => {
-    logging(
-      'error',
-      base,
-      req.sessionID,
-      `Getting accounts with query ${param} failed ! `,
-      JSON.stringify(error)
-    );
-    res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-  });
+      res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
+    });
+};
 
-}
+const findOneAccount = (req, res, param) => {
+  logging('info', base, req.sessionID, `Starting finding one account`);
+  accountsData
+    .findOne(req.sessionID, param)
+    .then((account) => {
+      if (account) {
+        logging('info', base, req.sessionID, `Account found !`);
+      } else {
+        logging('info', base, req.sessionID, `No account !`);
+      }
+      res.status(httpStatusCodes.OK).json(account);
+    })
+    .catch((error) => {
+      logging(
+        'error',
+        base,
+        req.sessionID,
+        `Getting accounts with query ${param} failed ! `,
+        JSON.stringify(error)
+      );
+      res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
+    });
+};
 
 exports.getAccounts = (req, res) => {
-  logging(
-    'info',
-    base,
-    req.sessionID,
-    `Starting getting accounts `
-  );
+  logging('info', base, req.sessionID, `Starting getting accounts `);
 
   const param = {
-    query: {},
-    fields: '',
+    fields: '_id pseudo email presentation creationDate isAdmin',
   };
 
   findAccounts(req, res, param);
-  
 };
 
+exports.getOneAccount = (req, res) => {
+  console.log('req.params', req.params.id);
+  logging('info', base, req.sessionID, `Starting getting account `);
+
+  const param = {
+    query: { _id: req.params.id },
+    fields: '_id pseudo email presentation creationDate isAdmin',
+  };
+
+  findOneAccount(req, res, param);
+};
 
 exports.searchAccounts = (req, res) => {
   logging(
@@ -82,22 +105,14 @@ exports.searchAccounts = (req, res) => {
 
   // paramètres de la requête de recherche de comptes
   const param = {
-    query: {
-      $or: [
-        { firstName: termRegex },
-        { lastName: termRegex },
-      ],
-    }
+    query: { pseudo: termRegex },
+    param: '_id pseudo, email, presentation, creationDate, isAdmin',
   };
 
   findAccounts(req, res, param);
 };
-/*====================================================================================*
- * Mise à jour d'une accountne
- *=====================================================================================*/
-
 exports.updateAccount = async (req, res) => {
-  if (!req.body || !req.body.id) {
+  if (!req.params || !req.body || !req.params.id) {
     logging('error', base, req.sessionID, 'Bad request on update account');
     res.status(httpStatusCodes.BAD_REQUEST).end();
   }
@@ -107,7 +122,7 @@ exports.updateAccount = async (req, res) => {
     base,
     req.sessionID,
     'Starting updating account',
-    JSON.stringify(req.body.id)
+    JSON.stringify(req.params.id)
   );
 
   // statut de la mise à jour
@@ -118,7 +133,7 @@ exports.updateAccount = async (req, res) => {
 
   // paramétrage de la requête mongo pour la mise àjour
   const paramUpdate = {
-    query: { _id: req.body.id },
+    query: { _id: req.params.id },
     fields: null,
   };
 
@@ -208,6 +223,7 @@ exports.updateAccount = async (req, res) => {
           `Account with id ${req.body.id} updated !`
         );
         updateStatus.save = true;
+        updateStatus.account = account;
         updateStatus.photo = account.photo; // retourner l'url de la photo, WHY???
       } else {
         updateStatus.save = false;
@@ -292,19 +308,17 @@ exports.deleteAccount = (req, res) => {
     'info',
     base,
     req.sessionID,
-    `Starting deleting account with ${JSON.stringify(req.body.id)}`
+    `Starting deleting account with ${JSON.stringify(req.params.id)}`
   );
-;
-
   accountsData
-    .delete(req.sessionID, req.body.id)
-    .then((account) => {      
-        logging(
-          'info',
-          base,
-          req.sessionID,
-          `${JSON.stringify(account)} deleted!`
-        );      
+    .delete(req.sessionID, req.params.id)
+    .then((account) => {
+      logging(
+        'info',
+        base,
+        req.sessionID,
+        `${JSON.stringify(account)} deleted!`
+      );
       res.status(httpStatusCodes.OK).json(account);
     })
     .catch((error) => {
@@ -312,7 +326,7 @@ exports.deleteAccount = (req, res) => {
         'error',
         base,
         req.sessionID,
-        `deleting ${req.body.id} failed ! `,
+        `deleting ${req.params.id} failed ! `,
         JSON.stringify(error)
       );
       res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
