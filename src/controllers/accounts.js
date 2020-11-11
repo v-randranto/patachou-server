@@ -14,6 +14,12 @@ const httpStatusCodes = require('../constants/httpStatusCodes.json');
 const { logging } = require('../utils/loggingHandler');
 const accountsData = require('../access-data/accountsData');
 
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} param 
+ */
 const findAccounts = (req, res, param) => {
   logging('info', base, req.sessionID, `Starting finding accounts `);
   accountsData
@@ -43,6 +49,12 @@ const findAccounts = (req, res, param) => {
     });
 };
 
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} param 
+ */
 const findOneAccount = (req, res, param) => {
   logging('info', base, req.sessionID, `Starting finding one account`);
   accountsData
@@ -67,28 +79,43 @@ const findOneAccount = (req, res, param) => {
     });
 };
 
+/**
+ * Consulter des comptes
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.getAccounts = (req, res) => {
   logging('info', base, req.sessionID, `Starting getting accounts `);
 
   const param = {
-    fields: '_id pseudo email presentation creationDate isAdmin',
+    fields: '_id pseudo email presentation creationDate modificationDate isAdmin',
   };
 
   findAccounts(req, res, param);
 };
 
+/**
+ * Consulter un compte
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.getOneAccount = (req, res) => {
   console.log('req.params', req.params.id);
   logging('info', base, req.sessionID, `Starting getting account `);
 
   const param = {
     query: { _id: req.params.id },
-    fields: '_id pseudo email presentation creationDate isAdmin',
+    fields: '_id pseudo email presentation creationDate modificationDate isAdmin',
   };
 
   findOneAccount(req, res, param);
 };
 
+/**
+ * Recherche de comptes
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.searchAccounts = (req, res) => {
   logging(
     'info',
@@ -106,11 +133,17 @@ exports.searchAccounts = (req, res) => {
   // paramètres de la requête de recherche de comptes
   const param = {
     query: { pseudo: termRegex },
-    param: '_id pseudo, email, presentation, creationDate, isAdmin',
+    fields: '_id pseudo email presentation creationDate modificationDate isAdmin',
   };
 
   findAccounts(req, res, param);
 };
+
+/**
+ * Modification d'un compte
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.updateAccount = async (req, res) => {
   if (!req.params || !req.body || !req.params.id) {
     logging('error', base, req.sessionID, 'Bad request on update account');
@@ -168,10 +201,7 @@ exports.updateAccount = async (req, res) => {
       );
     });
 
-  /*-----------------------------------------------------------------------------*
-   * stockage de la photo si chargée
-   *----------------------------------------------------------------------------*/
-
+// Chargement photo
   await (() => {
     return new Promise((resolve, reject) => {
       if (!req.body.photo) {
@@ -208,10 +238,7 @@ exports.updateAccount = async (req, res) => {
       );
     });
 
-  /*-------------------------------------------------------------------------*
-   * Enregistrement en base
-   *-------------------------------------------------------------------------*/
-
+  // Enregistrement modification du compte
   await accountsData
     .update(req.sessionID, paramUpdate)
     .then((account) => {
@@ -246,9 +273,7 @@ exports.updateAccount = async (req, res) => {
       throw error;
     });
 
-  /*-----------------------------------------------------------------------------*
-   * Retour du résultat au client
-   *----------------------------------------------------------------------------*/
+ // Retour client
   logging(
     'info',
     base,
@@ -263,14 +288,17 @@ exports.updateAccount = async (req, res) => {
   }
 };
 
+/**
+ * Ajout d'un nouveau compte
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.addAccount = async (req, res) => {
   let addStatus = false;
 
   logging('info', base, req.sessionID, 'Starting adding new account...');
 
-  /*-----------------------------------------------------------------------------*
-   * Enregistrement en base du nouveau membre
-   *----------------------------------------------------------------------------*/
+// Ajout et enregistrement nouveau compte
   await accountsData
     .addOne(req.sessionID, req.body.account)
     .then(() => {
@@ -286,9 +314,7 @@ exports.addAccount = async (req, res) => {
       );
     });
 
-  /*-----------------------------------------------------------------------------*
-   * Retour du résultat au client
-   *----------------------------------------------------------------------------*/
+   // Retour du résultat au client  
   logging(
     'info',
     base,
@@ -303,6 +329,11 @@ exports.addAccount = async (req, res) => {
   }
 };
 
+/**
+ * Suppression d'un compte
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.deleteAccount = (req, res) => {
   logging(
     'info',

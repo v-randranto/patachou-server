@@ -15,8 +15,10 @@ const { base } = require('path').parse(__filename);
 const httpStatusCodes = require('../src/constants/httpStatusCodes.json');
 
 const accountsRouter = require('./routes/accounts');
+const connectionRouter = require('./routes/connection');
 const PATH_STATIC_FILES = 'dist/patachou-client/';
 const ACCOUNTS_API_PATH = '/api/accounts/';
+const CONNECTION_API_PATH = '/api/connection/';
 
 const app = express();
 app.use(helmet());
@@ -63,6 +65,7 @@ app.use((req, res, next) => {
 
 // routes
 app.use(ACCOUNTS_API_PATH, accountsRouter);
+app.use(CONNECTION_API_PATH, connectionRouter);
 
 app.get('/*', function (req, res) {
   if (process.env.NODE_ENV === 'production') {
