@@ -31,13 +31,13 @@ const registerStatus = {
   email: false,
 };
 
-function NewAccount(initObject) {
-  this.pseudo = initObject.pseudo;
-  this.password = initObject.password;
-  this.email = initObject.email;
-  this.presentation = initObject.presentation;
-  this.photo = {};
-}
+// function NewAccount(initObject) {
+//   this.pseudo = initObject.pseudo;
+//   this.password = initObject.password;
+//   this.email = initObject.email;
+//   this.presentation = initObject.presentation;
+//   this.photo = {};
+// }
 
 // eslint-disable-next-line no-undef
 const sender = process.env.EMAIL_FROM;
@@ -62,12 +62,12 @@ exports.addAccount = async (req, res) => {
 
   logging('info', base, req.sessionID, 'Starting registering new account...');
 
-  const newAccount = new NewAccount(req.body.account);
+  const newAccount = {...req.body.account};
   const param = {
     query: { pseudo: newAccount.pseudo },
     fields: 'pseudo',
   };
-
+  
   await accountData
     .findOne(req.sessionID, param)
     .then((account) => {
@@ -149,8 +149,9 @@ exports.addAccount = async (req, res) => {
 
   await (function () {
     return new Promise((resolve, reject) => {
-      if (req.body.photo) {
-        const accountPhoto = req.body.photo;
+      if (newAccount.photo) {
+        const accountPhoto = newAccount.photo;
+        delete newAccount.photo
         logging(
           'info',
           base,
