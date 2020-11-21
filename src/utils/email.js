@@ -32,6 +32,8 @@ mailSender.prototype.send = async function (sender, recipient, subject, text) {
     return new Promise(function (resolve, reject) {
         transporter.sendMail(mailOptions, function (error, info) {
             if (error) {
+                console.log('mailOptions', mailOptions)
+                console.log('error', error)
                 reject(error);
             } else {
                 resolve(info);
