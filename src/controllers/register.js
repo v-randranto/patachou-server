@@ -31,14 +31,6 @@ const registerStatus = {
   email: false,
 };
 
-// function NewAccount(initObject) {
-//   this.pseudo = initObject.pseudo;
-//   this.password = initObject.password;
-//   this.email = initObject.email;
-//   this.presentation = initObject.presentation;
-//   this.photo = {};
-// }
-
 // eslint-disable-next-line no-undef
 const sender = process.env.EMAIL_FROM;
 const textEmail = function (pseudo) {

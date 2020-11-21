@@ -33,9 +33,8 @@ exports.findOne = (sessionID, param) => {
     Account.findOne(param.query, param.fields)
     .then((account) => {
       if (account) {        
-        logging('info', base, sessionID, `Finding one account successful !`);
+        logging('info', base, sessionID, `Finding one account successful ! ${account.pseudo} ${account._id}`);
         // TODO formatter les accounts avant de les retourner
-        console.log('found account', account)
         resolve(account);
       } else {
         logging('info', base, sessionID, 'No account found !');
