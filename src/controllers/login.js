@@ -48,7 +48,6 @@ exports.authenticate = (req, res) => {
   };
 
   const returnData = {
-    status: loginStatus,
     account: null,
     token: null,
     expiresIn: 24 * 3600 * 1000, // jeton valide pendant 1j
@@ -202,14 +201,14 @@ exports.authenticate = (req, res) => {
         res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
       } else if (loginStatus.notFound) {
         logging('debug', base, req.sessionID, 'not found');
-        res.status(httpStatusCodes.NOT_FOUND).json({ loginStatus });
+        res.status(httpStatusCodes.NOT_FOUND).end();
       } else if (
         loginStatus.pwdExpired ||
         loginStatus.authKO ||
         loginStatus.jwtKO
       ) {
         logging('debug', base, req.sessionID, 'login unauthorized');
-        res.status(httpStatusCodes.UNAUTHORIZED).json({ loginStatus });
+        res.status(httpStatusCodes.UNAUTHORIZED).end();
       } else {
         logging(
           'debug',
