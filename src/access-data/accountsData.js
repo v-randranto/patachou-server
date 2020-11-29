@@ -51,7 +51,7 @@ exports.findOne = (sessionID, param) => {
 
 exports.addOne = (sessionID, account) => {
   
-  logging('info', base, sessionID, 'Starting saving account...', JSON.stringify(account));
+  logging('info', base, sessionID, 'Starting saving account...');
   
   return new Promise((resolve, reject) => {
     const newAccount = new Account(account);

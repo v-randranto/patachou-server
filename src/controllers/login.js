@@ -7,6 +7,7 @@ const httpStatusCodes = require('../constants/httpStatusCodes.json');
 const { logging } = require('../utils/loggingHandler');
 const jwt = require('jsonwebtoken');
 const accountsData = require('../access-data/accountsData');
+const { toTitleCase } = require('../utils/titleCase');
 
 /****************************************************************************************
  *
@@ -55,7 +56,7 @@ exports.authenticate = (req, res) => {
 
   const setFoundAccount = (account) => {
     foundAccount._id = account._id,
-    foundAccount.pseudo = account.pseudo,
+    foundAccount.pseudo = toTitleCase(account.pseudo),
     foundAccount.isAdmin = account.isAdmin,
     foundAccount.creationDate = account.creationDate,
     foundAccount.modificationDate = account.modificationDate,
