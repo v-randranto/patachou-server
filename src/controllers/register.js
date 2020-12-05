@@ -82,6 +82,7 @@ exports.addAccount = async (req, res) => {
           req.sessionID,
           `Pseudo ${newAccount.pseudo} is available`
         );
+        newAccount.roles = ["user"]
         registerStatus.pseudoUnavailable = false;
       }
     })

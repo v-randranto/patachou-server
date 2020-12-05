@@ -50,7 +50,7 @@ exports.authenticate = (req, res) => {
 
   const returnData = {
     account: null,
-    token: null,
+    accessToken: null,
     expiresIn: 24 * 3600 * 1000, // jeton valide pendant 1j
   };
 
@@ -128,7 +128,7 @@ exports.authenticate = (req, res) => {
               req.sessionID,
               `Account ${pseudo} token created`
             );
-            returnData.token = token;
+            returnData.accessToken = token;
             returnData.account = {...foundAccount};
             loginStatus.jwtKO = false;
           } catch (error) {
