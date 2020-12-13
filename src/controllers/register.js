@@ -13,6 +13,7 @@ const passwordHandler = require('../utils/passwordHandler');
 const { toTitleCase } = require('../utils/titleCase');
 const mailSender = new (require('../utils/email'))();
 const emailContent = require('../constants/email.json');
+const accountConstants = require('../constants/account.json');
 // eslint-disable-next-line no-undef
 const { base } = require('path').parse(__filename);
 const httpStatusCodes = require('../constants/httpStatusCodes.json');
@@ -22,7 +23,10 @@ const accountData = require('../access-data/accountsData');
 
 // url de l'avatar par défaut
 // eslint-disable-next-line no-undef
-const default_avatar = process.env.DEFAULT_AVATAR;
+const default_avatar_1 = process.env.DEFAULT_AVATAR_1;
+const default_avatar_2 = process.env.DEFAULT_AVATAR_2;
+const default_avatar_3 = process.env.DEFAULT_AVATAR_3;
+const default_avatar_4 = process.env.DEFAULT_AVATAR_3;
 
 // statut de la mise à jour s à retourner au client
 const registerStatus = {
@@ -31,21 +35,12 @@ const registerStatus = {
   email: false,
 };
 
-// function NewAccount(initObject) {
-//   this.pseudo = initObject.pseudo;
-//   this.password = initObject.password;
-//   this.email = initObject.email;
-//   this.presentation = initObject.presentation;
-//   this.photo = {};
-// }
-
 // eslint-disable-next-line no-undef
 const sender = process.env.EMAIL_FROM;
-const textEmail = function (pseudo) {
-  return `<html><body><p>Bonjour ${toTitleCase(pseudo)},<br><br>${
-    emailContent.REGISTER.text
-  }<br><br>${emailContent.REGISTER.signature}</p></body></html>`;
-};
+
+const getRandomInt = (max) => {
+  return Math.floor(Math.random() * Math.floor(max)) + 1;
+}
 
 exports.addAccount = async (req, res) => {
   
@@ -63,8 +58,9 @@ exports.addAccount = async (req, res) => {
   logging('info', base, req.sessionID, 'Starting registering new account...');
 
   const newAccount = {...req.body.account};
+  newAccount.pseudo = newAccount.pseudo.toLowerCase()
   const param = {
-    query: { pseudo: newAccount.pseudo },
+    query: { pseudo: newAccount.pseudo},
     fields: 'pseudo',
   };
   
@@ -86,6 +82,7 @@ exports.addAccount = async (req, res) => {
           req.sessionID,
           `Pseudo ${newAccount.pseudo} is available`
         );
+        newAccount.roles = ["user"]
         registerStatus.pseudoUnavailable = false;
       }
     })
@@ -130,6 +127,9 @@ exports.addAccount = async (req, res) => {
       logging('info', base, req.sessionID, `Successful hashin' and saltin'!`);
       newAccount.password = res.hash;
       newAccount.salt = res.salt;
+      if (!newAccount.presentation) {
+        newAccount.presentation = accountConstants.defaultPresentation
+      }
     })
     .catch((error) => {
       logging(
@@ -173,7 +173,7 @@ exports.addAccount = async (req, res) => {
           req.sessionID,
           `${newAccount.pseudo} has no picture.`
         );
-        newAccount.photoUrl = default_avatar;
+        newAccount.photoUrl = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
         resolve(true);
       }
     });
@@ -194,7 +194,7 @@ exports.addAccount = async (req, res) => {
       ``,
       JSON.stringify(error)
     );
-    newAccount.photoUrl = default_avatar;
+    newAccount.photoUrl = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
   });
 
   /*-----------------------------------------------------------------------------*
@@ -229,7 +229,7 @@ exports.addAccount = async (req, res) => {
       sender,
       newAccount.email,
       emailContent.REGISTER.subject,
-      textEmail(newAccount.pseudo)
+      toTitleCase(newAccount.pseudo)
     )
     .then(() => {
       logging('info', base, req.sessionID, ' Email processing successfull !');
