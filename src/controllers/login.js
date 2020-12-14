@@ -19,10 +19,10 @@ const { toTitleCase } = require('../utils/titleCase');
  ****************************************************************************************/
 
 exports.authenticate = (req, res) => {
-  logging('info', base, req.sessionID, 'Starting login authentication...');
+  logging('info', base, null, 'Starting login authentication...');
 
   if (!req.body || !req.body.login) {
-    logging('error', base, req.sessionID, 'Bad request on check account');
+    logging('error', base, null, 'Bad request on check account');
     res.status(httpStatusCodes.BAD_REQUEST).end();
   }
 
@@ -71,16 +71,16 @@ exports.authenticate = (req, res) => {
   
 
   accountsData
-    .findOne(req.sessionID, param)
+    .findOne(param)
     .then((account) => {
       if (account) {
-        logging('info', base, req.sessionID, `Account ${pseudo} found`);
+        logging('info', base, null, `Account ${pseudo} found`);
         setFoundAccount(account)
         if (foundAccount.pwdExpiringDate < new Date()) {
           logging(
             'info',
             base,
-            req.sessionID,
+            null,
             `Account ${pseudo} paswword has expired`
           );
           loginStatus.pwdExpired = true;
@@ -89,7 +89,7 @@ exports.authenticate = (req, res) => {
           return true;
         }
       } else {
-        logging('info', base, req.sessionID, `Account ${pseudo} not found !`);
+        logging('info', base, null, `Account ${pseudo} not found !`);
         loginStatus.notFound = true;
         return false;
       }
@@ -106,7 +106,7 @@ exports.authenticate = (req, res) => {
           logging(
             'info',
             base,
-            req.sessionID,
+            null,
             `Account ${pseudo} password checked !`
           );
           delete foundAccount.password;
@@ -125,7 +125,7 @@ exports.authenticate = (req, res) => {
             logging(
               'info',
               base,
-              req.sessionID,
+              null,
               `Account ${pseudo} token created`
             );
             returnData.accessToken = token;
@@ -135,7 +135,7 @@ exports.authenticate = (req, res) => {
             logging(
               'error',
               base,
-              req.sessionID,
+              null,
               `Jwt signing failed on account ${pseudo} !`
             );
             loginStatus.jwtKO = true;
@@ -147,7 +147,7 @@ exports.authenticate = (req, res) => {
           logging(
             'error',
             base,
-            req.sessionID,
+            null,
             `Account ${pseudo} password mismatch !`
           );
           loginStatus.authKO = true;
@@ -159,18 +159,18 @@ exports.authenticate = (req, res) => {
     })
     .then((accountAuthenticated) => {
       if (accountAuthenticated) {
-        logging('info', base, req.sessionID, `starting updating login status`);
+        logging('info', base, null, `starting updating login status`);
         paramUpdate.query._id = foundAccount._id;
         accountsData
-          .update(req.sessionID, paramUpdate)
+          .update(paramUpdate)
           .then((account) => {
             if (account) {
-              logging('info', base, req.sessionID, `loggedIn status updated !`);
+              logging('info', base, null, `loggedIn status updated !`);
             } else {
               logging(
                 'error',
                 base,
-                req.sessionID,
+                null,
                 `Account with id ${foundAccount._id} not found  !`
               );
               throw new Error('account not found');
@@ -180,7 +180,7 @@ exports.authenticate = (req, res) => {
             logging(
               'error',
               base,
-              req.sessionID,
+              null,
               `updating login status failed ! ${error}`
             );
             throw error;
@@ -191,30 +191,30 @@ exports.authenticate = (req, res) => {
       logging(
         'error',
         base,
-        req.sessionID,
+        null,
         `Getting account ${pseudo} failed ! ${error}`
       );
       loginStatus.error = true;
     })
     .finally(() => {
       if (loginStatus.error) {
-        logging('debug', base, req.sessionID, 'technical error');
+        logging('debug', base, null, 'technical error');
         res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
       } else if (loginStatus.notFound) {
-        logging('debug', base, req.sessionID, 'not found');
+        logging('debug', base, null, 'not found');
         res.status(httpStatusCodes.NOT_FOUND).end();
       } else if (
         loginStatus.pwdExpired ||
         loginStatus.authKO ||
         loginStatus.jwtKO
       ) {
-        logging('debug', base, req.sessionID, 'login unauthorized');
+        logging('debug', base, null, 'login unauthorized');
         res.status(httpStatusCodes.UNAUTHORIZED).end();
       } else {
         logging(
           'debug',
           base,
-          req.sessionID,
+          null,
           'login authorized',
           JSON.stringify(returnData)
         );

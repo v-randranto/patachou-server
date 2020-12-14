@@ -48,14 +48,14 @@ exports.addAccount = async (req, res) => {
     logging(
       'error',
       base,
-      req.sessionID,
+      null,
       'Bad request on registering account.'
     );
     console.log('le body est ko')
     return res.status(httpStatusCodes.BAD_REQUEST).end();
   }
 
-  logging('info', base, req.sessionID, 'Starting registering new account...');
+  logging('info', base, null, 'Starting registering new account...');
 
   const newAccount = {...req.body.account};
   newAccount.pseudo = newAccount.pseudo.toLowerCase()
@@ -65,13 +65,13 @@ exports.addAccount = async (req, res) => {
   };
   
   await accountData
-    .findOne(req.sessionID, param)
+    .findOne(param)
     .then((account) => {
       if (account) {
         logging(
           'info',
           base,
-          req.sessionID,
+          null,
           `Pseudo ${newAccount.pseudo} is already in use !`
         );
         registerStatus.pseudoUnavailable = true;
@@ -79,7 +79,7 @@ exports.addAccount = async (req, res) => {
         logging(
           'info',
           base,
-          req.sessionID,
+          null,
           `Pseudo ${newAccount.pseudo} is available`
         );
         newAccount.roles = ["user"]
@@ -90,7 +90,7 @@ exports.addAccount = async (req, res) => {
       logging(
         'error',
         base,
-        req.sessionID,
+        null,
         `Checking pseudo has failed ! ${error}`
       );
       res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
@@ -110,7 +110,7 @@ exports.addAccount = async (req, res) => {
     logging(
       'info',
       base,
-      req.sessionID,
+      null,
       `Let's do some hashin' and saltin'...`
     );
     return new Promise((resolve, reject) => {
@@ -124,7 +124,7 @@ exports.addAccount = async (req, res) => {
     });
   })()
     .then((res) => {
-      logging('info', base, req.sessionID, `Successful hashin' and saltin'!`);
+      logging('info', base, null, `Successful hashin' and saltin'!`);
       newAccount.password = res.hash;
       newAccount.salt = res.salt;
       if (!newAccount.presentation) {
@@ -135,7 +135,7 @@ exports.addAccount = async (req, res) => {
       logging(
         'error',
         base,
-        req.sessionID,
+        null,
         `The hashin' and saltin' didn't go down well!`,
         JSON.stringify(error)
       );
@@ -155,10 +155,10 @@ exports.addAccount = async (req, res) => {
         logging(
           'info',
           base,
-          req.sessionID,
+          null,
           `${newAccount.pseudo} has a nice picture ${accountPhoto.name}.`
         );
-        storePix(req.sessionID, accountPhoto.content)
+        storePix(accountPhoto.content)
           .then((result) => {
             newAccount.photoUrl = result.secure_url;
             resolve(true);
@@ -170,7 +170,7 @@ exports.addAccount = async (req, res) => {
         logging(
           'info',
           base,
-          req.sessionID,
+          null,
           `${newAccount.pseudo} has no picture.`
         );
         newAccount.photoUrl = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
@@ -182,7 +182,7 @@ exports.addAccount = async (req, res) => {
     logging(
       'info',
       base,
-      req.sessionID,
+      null,
       `${newAccount.pseudo}'s picture is loaded.`
     );
   })
@@ -190,7 +190,7 @@ exports.addAccount = async (req, res) => {
     logging(
       'error',
       base,
-      req.sessionID,
+      null,
       ``,
       JSON.stringify(error)
     );
@@ -201,16 +201,16 @@ exports.addAccount = async (req, res) => {
    * Enregistrement en base du nouveau membre
    *----------------------------------------------------------------------------*/
   await accountData
-    .addOne(req.sessionID, newAccount)
+    .addOne(newAccount)
     .then(() => {
-      logging('info', base, req.sessionID, 'Adding account is successful !');
+      logging('info', base, null, 'Adding account is successful !');
       registerStatus.save = true;
     })
     .catch((error) => {
       logging(
         'error',
         base,
-        req.sessionID,
+        null,
         `Adding account has failed ! ${error}`
       );
       registerStatus.save = false;
@@ -232,7 +232,7 @@ exports.addAccount = async (req, res) => {
       toTitleCase(newAccount.pseudo)
     )
     .then(() => {
-      logging('info', base, req.sessionID, ' Email processing successfull !');
+      logging('info', base, null, ' Email processing successfull !');
       registerStatus.email = true;
     })
     .catch((error) => {
@@ -240,7 +240,7 @@ exports.addAccount = async (req, res) => {
       logging(
         'error',
         base,
-        req.sessionID,
+        null,
         `Email processing has failed ! ${error}`
       );
       registerStatus.email = false;
@@ -253,7 +253,7 @@ exports.addAccount = async (req, res) => {
   logging(
     'info',
     base,
-    req.sessionID,
+    null,
     `Final registering status`,
     JSON.stringify(registerStatus)
   );

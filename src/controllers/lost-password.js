@@ -32,11 +32,11 @@ const PASSORD_LENGTH = 8;
 exports.renewPassword = async (req, res) => {
 
   if (!req.body || !req.body.email) {
-    logging('error', base, req.sessionID, 'Bad request on renew password');
+    logging('error', base, null, 'Bad request on renew password');
     res.status(httpStatusCodes.BAD_REQUEST).end();
   }
   
-  logging('info', base, req.sessionID, 'Starting renewing password...');
+  logging('info', base, null, 'Starting renewing password...');
 
   // statuts de la réinitialisation du mot de passe
   const renewStatus = {
@@ -71,16 +71,16 @@ exports.renewPassword = async (req, res) => {
    * recherche du compte à partir de l'email et générer un mot de passe provisoire
    *-----------------------------------------------------------------------------*/
   await accountData
-    .findOne(req.sessionID, param)
+    .findOne(null, param)
     .then(account => {
       if (account) {
-        logging('info', base, req.sessionID, `email ${account.email} found !`
+        logging('info', base, null, `email ${account.email} found !`
         );
         foundAccount = account;
         paramUpdate.query._id = account._id; 
         renewStatus.emailNotFound = false;
       } else {
-        logging('info', base, req.sessionID, `email ${req.body.email} not found !`
+        logging('info', base, null, `email ${req.body.email} not found !`
         );
         renewStatus.emailNotFound = true;
         return;
@@ -88,7 +88,7 @@ exports.renewPassword = async (req, res) => {
       }
     })
     .catch(error => {
-      logging('error', base, req.sessionID, `finding account has failed ! ${error}`
+      logging('error', base, null, `finding account has failed ! ${error}`
       );
       throw error;
     });
@@ -102,7 +102,7 @@ exports.renewPassword = async (req, res) => {
    * générer et chiffrer le mot de passe provisoire
    *-------------------------------------------------------------------------*/
   await (function () {           
-    logging('info', base, req.sessionID, `Let's do some hashin' and saltin'...`);    
+    logging('info', base, null, `Let's do some hashin' and saltin'...`);    
     newPassword = passwordHandler.generatePwd(PASSORD_LENGTH);
     return new Promise((resolve, reject) => {
       // hachage avec sel du mot de passe
@@ -115,12 +115,12 @@ exports.renewPassword = async (req, res) => {
     });
   })()
   .then(res => {          
-    logging('info', base, req.sessionID, `Successful hashin' and saltin'!`);
+    logging('info', base, null, `Successful hashin' and saltin'!`);
     paramUpdate.fields.password = res.hash;
     paramUpdate.fields.salt = res.salt;
   })
   .catch(error => {
-    logging('error', base, req.sessionID, `The hashin' and saltin' didn't go down well!`);
+    logging('error', base, null, `The hashin' and saltin' didn't go down well!`);
     throw error;
   });
   
@@ -129,18 +129,18 @@ exports.renewPassword = async (req, res) => {
    *-------------------------------------------------------------------------*/
   
   await accountData
-    .update(req.sessionID, paramUpdate)
+    .update(null, paramUpdate)
     .then(account => {
       if (account) {
-        logging('info', base, req.sessionID, `Account with id ${foundAccount._id} updated !`);
+        logging('info', base, null, `Account with id ${foundAccount._id} updated !`);
         renewStatus.save = true;
       } else {
         renewStatus.save = false;
-        logging('info', base, req.sessionID, `Account with id  ${foundAccount._id}  not found !`);
+        logging('info', base, null, `Account with id  ${foundAccount._id}  not found !`);
       }
     })
     .catch(error => {
-      logging('error', base, req.sessionID, 
+      logging('error', base, null, 
       `updating account with id  ${foundAccount._id}  failed ! ${error}`);
       renewStatus.save = false;
       throw error;
@@ -163,20 +163,20 @@ exports.renewPassword = async (req, res) => {
       textEmail(foundAccount.pseudo, newPassword)
     )
     .then(() => {
-      logging('info', base, req.sessionID, ' Email processing successfull !');
+      logging('info', base, null, ' Email processing successfull !');
       renewStatus.email = true;
       return;
     })
     .catch(error => {
       // une erreur sur le traitement email n'est pas bloquante
-      logging('error', base, req.sessionID, `Email processing has failed ! ${error}`);
+      logging('error', base, null, `Email processing has failed ! ${error}`);
       renewStatus.email = false;
     });
 
   /*-----------------------------------------------------------------------------*
    * Retour du résultat au client
    *----------------------------------------------------------------------------*/
-  logging('info', base, req.sessionID, `Final registering status`, JSON.stringify(renewStatus)
+  logging('info', base, null, `Final registering status`, JSON.stringify(renewStatus)
   );
   if (renewStatus.save) {
     res.status(httpStatusCodes.OK).json(renewStatus);
