@@ -11,6 +11,8 @@ const { logging } = require('./utils/loggingHandler');
 const { base } = require('path').parse(__filename);
 const httpStatusCodes = require('../src/constants/httpStatusCodes.json');
 
+const connectDB = require('./config/db-config')
+
 const accountsRouter = require('./routes/accounts');
 const authRouter = require('./routes/auth');
 const recipesRouter = require('./routes/recipes');
@@ -26,18 +28,7 @@ app.use(bodyParser.urlencoded({limit: '1mb', extended: true}));
 app.use(cors());
 app.use(express.static(PATH_STATIC_FILES));
 
-const dbUrl = process.env.DB_URL;
-
-mongoose
-  .connect(dbUrl, { useUnifiedTopology: true, useNewUrlParser: true, useFindAndModify: false  })
-  .then(() => {
-    logging('info', base, null, `Connected to MongoDB`);
-  })
-  .catch((error) => {
-    logging('error', base, null, 'MongoDB auth failed !', error);
-    res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-  });
-
+connectDB();
 
 app.use((req, res, next) => {
   logging('info', base, req.sessionID, `PATH=${req.originalUrl}`);
