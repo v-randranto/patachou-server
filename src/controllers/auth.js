@@ -1,49 +1,49 @@
 const User = require("../models/User")
+const ErrorResponse = require("../utils/errorResponse")
 
 exports.register = async (req, res, next) => {
-    const {pseudo, email, password} = req.body.registerData
+    const {
+        pseudo,
+        email,
+        password
+    } = req.body.registerData
     try {
         const user = await User.create({
-            pseudo, email, password
+            pseudo,
+            email,
+            password
         })
         res.status('201').json({
             success: true,
             user
         })
     } catch (error) {
-        res.status('500').json({
-            success:false,
-            error: error.message
-        })
+        next(error)
     }
 
     res.send("register")
 }
 
 exports.login = async (req, res, next) => {
-    const {email, password} = req.body.loginData
+    const {
+        email,
+        password
+    } = req.body.loginData
     if (!email || !password) {
-        res.status('400').json({
-            success:false,
-            error: "Bad request: email or password missing"
-        })
+        return next(new ErrorResponse("Bad request: email or password missing", 400))    
     }
 
     try {
-        const user = await User.findOne({email}).select("+password")
+        const user = await User.findOne({
+            email
+        }).select("+password")
         if (!user) {
-            res.status('404').json({
-                success:false,
-                error: "Invalid credentials"
-            })
+            return next(new ErrorResponse("Invalid credentials", 404))
         }
-        
+
         const isMatched = await user.checkPassword(password)
         if (!isMatched) {
-            res.status('404').json({
-                success:false,
-                error: "Invalid credentials"
-            })
+            return next(new ErrorResponse("Invalid credentials", 404))
         }
 
         res.status('200').json({
@@ -51,10 +51,7 @@ exports.login = async (req, res, next) => {
             token: "myToken"
         })
     } catch (error) {
-        res.status('500').json({
-            success:false,
-            error: error.message
-        })
+        return next(new ErrorResponse(error.message, 500))
     }
 
     res.send("login")

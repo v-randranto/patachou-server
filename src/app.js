@@ -16,6 +16,8 @@ const connectDB = require('./config/db-config')
 const accountsRouter = require('./routes/accounts');
 const authRouter = require('./routes/auth');
 const recipesRouter = require('./routes/recipes');
+const errorHandler = require('./middleware/error');
+
 const PATH_STATIC_FILES = 'dist/patachou-client/';
 const ACCOUNTS_API_PATH = '/api/accounts/';
 const AUTH_API_PATH = '/api/auth/';
@@ -50,5 +52,7 @@ app.use(function (req, res) {
   logging('info', base, req.sessionID, `PATH=${req.originalUrl} not found !`);
   res.status(httpStatusCodes.NOT_FOUND).end();  
 });
+
+app.use(errorHandler)
 
 module.exports = app;
