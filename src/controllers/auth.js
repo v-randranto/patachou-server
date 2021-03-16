@@ -4,8 +4,7 @@ const { logging } = require('../utils/loggingHandler');
 // eslint-disable-next-line no-undef
 const { base } = require('path').parse(__filename);
 
-exports.register = async (req, res, next) => {
-    
+exports.register = async (req, res, next) => {    
     const {
         pseudo,
         email,
@@ -19,7 +18,8 @@ exports.register = async (req, res, next) => {
             password
         })
         logging('info', base, null, `User ${user.pseudo} is registered`);
-        sendToken(user, 200, res)
+        const emailIsSent = await user.sendEmail()
+        sendToken(user, 200, res, emailIsSent)
     } catch (error) {
         logging('error', base, null, JSON.stringify(error));
         next(error)
@@ -29,17 +29,17 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     
     const {
-        email,
+        pseudo,
         password
     } = req.body.loginData
-    logging('info', base, null, `Starting login user ${email}`)
-    if (!email || !password) {
+    logging('info', base, null, `Starting login user ${pseudo}`)
+    if (!pseudo || !password) {
         return next(new ErrorResponse("Bad request: email or password missing", 400))    
     }
 
     try {
         const user = await User.findOne({
-            email
+            pseudo
         }).select("+password")
         if (!user) {
             return next(new ErrorResponse("Invalid credentials", 404))
@@ -67,10 +67,12 @@ exports.resetPassword = (req, res, next) => {
     res.send("reset password")
 }
 
-const sendToken = (user, statusCode, res) => {
+const sendToken = (user, statusCode, res, emailIsSent) => {
     const token = user.getSignedToken()
+    console.log('email', emailIsSent)
     res.status(statusCode).json({
         success: true,
-        token
+        token,
+        emailIsSent
     })
 }
