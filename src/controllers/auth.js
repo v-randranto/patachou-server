@@ -1,29 +1,38 @@
 const User = require("../models/User")
 const ErrorResponse = require("../utils/errorResponse")
+const { logging } = require('../utils/loggingHandler');
+// eslint-disable-next-line no-undef
+const { base } = require('path').parse(__filename);
 
 exports.register = async (req, res, next) => {
+    
     const {
         pseudo,
         email,
         password
     } = req.body.registerData
+    logging('info', base, null, `Start registering user ${pseudo} ${email}`);
     try {
         const user = await User.create({
             pseudo,
             email,
             password
         })
+        logging('info', base, null, `User ${user.pseudo} is registered`);
         sendToken(user, 200, res)
     } catch (error) {
+        logging('error', base, null, JSON.stringify(error));
         next(error)
     }
 }
 
 exports.login = async (req, res, next) => {
+    
     const {
         email,
         password
     } = req.body.loginData
+    logging('info', base, null, `Starting login user ${email}`)
     if (!email || !password) {
         return next(new ErrorResponse("Bad request: email or password missing", 400))    
     }
@@ -40,7 +49,7 @@ exports.login = async (req, res, next) => {
         if (!isMatched) {
             return next(new ErrorResponse("Invalid credentials", 404))
         }
-        console.log('gonna send token...')
+        logging('info', base, null, `User ${user.pseudo} is logged in`);
         sendToken(user, 200, res)
 
     } catch (error) {
@@ -49,10 +58,12 @@ exports.login = async (req, res, next) => {
 }
 
 exports.forgotPassword = (req, res, next) => {
+    logging('info', base, null, 'Starting forgotten password...');
     res.send("forgot password")
 }
 
 exports.resetPassword = (req, res, next) => {
+    logging('info', base, null, 'Starting resetting password...');
     res.send("reset password")
 }
 
