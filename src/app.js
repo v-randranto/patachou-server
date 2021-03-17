@@ -13,15 +13,13 @@ const httpStatusCodes = require('../src/constants/httpStatusCodes.json');
 
 const connectDB = require('./config/db-config')
 
-const accountsRouter = require('./routes/accounts');
 const authRouter = require('./routes/auth');
-const recipesRouter = require('./routes/recipes');
+const privateRouter = require('./routes/private');
 const errorHandler = require('./middleware/error');
 
 const PATH_STATIC_FILES = 'dist/patachou-client/';
-const ACCOUNTS_API_PATH = '/api/accounts/';
 const AUTH_API_PATH = '/api/auth/';
-const RECIPES_API_PATH = '/api/recipes/';
+const PRIVATE_API_PATH = '/api/private/';
 
 const app = express();
 app.use(helmet());
@@ -38,9 +36,8 @@ app.use((req, res, next) => {
 });
 
 // routes
-app.use(ACCOUNTS_API_PATH, accountsRouter);
 app.use(AUTH_API_PATH, authRouter);
-app.use(RECIPES_API_PATH, recipesRouter);
+app.use(PRIVATE_API_PATH, privateRouter);
 
 app.get('/*', function (req, res) {
   if (process.env.NODE_ENV === 'production') {
