@@ -9,14 +9,18 @@ exports.register = async (req, res, next) => {
     const {
         pseudo,
         email,
-        password
+        password,
+        photo,
+        presentation
     } = req.body.registerData
     logging('info', base, null, `Start registering user ${pseudo} ${email}`);
     try {
         const user = await User.create({
             pseudo,
             email,
-            password
+            password,
+            photo,
+            presentation
         })
         logging('info', base, null, `User ${user.pseudo} is registered`);
         const emailIsSent = await user.sendEmail()
