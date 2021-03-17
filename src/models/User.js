@@ -2,15 +2,15 @@
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken');
-const {
-  toTitleCase
-} = require('../utils/titleCase');
-const cloudinary = require('cloudinary').v2;
 
-const mailSender = new(require('../utils/email'))();
-const emailContent = require('../constants/email.json');
-const { getRandomInt } = require('../utils/randomNumber')
+const cloudinary = require('cloudinary').v2;
+const sendEmail = require('../utils/sendEmail');
+
+const {
+  getRandomInt
+} = require('../utils/randomNumber')
 
 const UserSchema = new mongoose.Schema({
   pseudo: {
@@ -56,7 +56,7 @@ UserSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt)
 
   if (this.photo) {
-    storePhoto(this.photo.content)
+    this.storePhoto(this.photo.content)
   } else {
     this.photo = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
   }
@@ -76,17 +76,19 @@ UserSchema.methods.getSignedToken = function () {
   })
 }
 
-UserSchema.methods.sendEmail = async function () {
-  // eslint-disable-next-line no-undef
-  const sender = process.env.EMAIL_FROM;
-  return await mailSender
-    .send(
-      sender,
-      this.email,
-      emailContent.REGISTER.subject,
-      toTitleCase(this.pseudo)
-    ).then(() => true)
+UserSchema.methods.getResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(20).toString("hex")
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex")
+  this.resetPasswordExpire = Date.now() + (60 * 60 * 1000)
+  return resetToken;
+}
 
+UserSchema.methods.sendRegisterEmail = async function (options, variables) {
+  return await sendEmail(options, "register", variables)
+}
+
+UserSchema.methods.sendResetPasswordEmail = async function (options, variables) {
+  return await sendEmail(options, "forgotPassword", variables)
 }
 
 UserSchema.methods.storePhoto = async function (content) {
@@ -95,9 +97,9 @@ UserSchema.methods.storePhoto = async function (content) {
     const result = await cloudinary.uploader.upload(content, {
       folder
     })
-    this.photoUrl = result.secure_url;
+    this.photo = result.secure_url;
   } catch (error) {
-    this.photoUrl = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
+    this.photo = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
   }
 }
 

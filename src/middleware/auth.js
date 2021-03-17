@@ -9,7 +9,7 @@ const httpStatusCodes = require('../constants/httpStatusCodes.json');
 
 exports.protect = async (req, res, next) => {
     let token;
-    if (req.headers.authorization && req.headers.authorization.startwith("Bearer")) {
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         token = req.headers.authorization.split(" ")[1]
     }
 
@@ -17,13 +17,14 @@ exports.protect = async (req, res, next) => {
         return next(new ErrorResponse("Accès non autorisé", httpStatusCodes.UNAUTHORIZED))
     }
 
-    try {
+    try {  
         const decoded = jwt.verify(token, process.env.TOKEN_KEY)
         const user = await User.findById(decoded.id)
         if (!user) {
             return next(new ErrorResponse("Utilisateur non trouvé", httpStatusCodes.NOT_FOUND))
         }
         req.user = user
+        next()
     } catch (error) {
         return next(new ErrorResponse("Accès non autorisé", httpStatusCodes.UNAUTHORIZED))
     }
