@@ -74,10 +74,10 @@ exports.resetPassword = (req, res, next) => {
 
 const sendToken = (user, statusCode, res, emailIsSent) => {
     const token = user.getSignedToken()
-    console.log('email', emailIsSent)
     res.status(statusCode).json({
         success: true,
         token,
-        emailIsSent
+        user,
+        emailIsSent,
     })
 }

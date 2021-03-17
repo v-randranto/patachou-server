@@ -54,13 +54,12 @@ UserSchema.pre("save", async function (next) {
   }
   const salt = await bcrypt.genSalt(10)
   this.password = await bcrypt.hash(this.password, salt)
-  
+
   if (this.photo) {
     storePhoto(this.photo.content)
   } else {
     this.photo = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
   }
-
   next()
 })
 
