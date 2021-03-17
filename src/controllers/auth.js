@@ -3,6 +3,7 @@ const ErrorResponse = require("../utils/errorResponse")
 const { logging } = require('../utils/loggingHandler');
 // eslint-disable-next-line no-undef
 const { base } = require('path').parse(__filename);
+const httpStatusCodes = require('../constants/httpStatusCodes.json');
 
 exports.register = async (req, res, next) => {    
     const {
@@ -19,7 +20,7 @@ exports.register = async (req, res, next) => {
         })
         logging('info', base, null, `User ${user.pseudo} is registered`);
         const emailIsSent = await user.sendEmail()
-        sendToken(user, 200, res, emailIsSent)
+        sendToken(user, httpStatusCodes.OK, res, emailIsSent)
     } catch (error) {
         logging('error', base, null, JSON.stringify(error));
         next(error)
@@ -34,7 +35,7 @@ exports.login = async (req, res, next) => {
     } = req.body.loginData
     logging('info', base, null, `Starting login user ${pseudo}`)
     if (!pseudo || !password) {
-        return next(new ErrorResponse("Bad request: email or password missing", 400))    
+        return next(new ErrorResponse("Mauvaise requête: email or password manquant", httpStatusCodes.BAD_REQUEST))    
     }
 
     try {
@@ -42,18 +43,18 @@ exports.login = async (req, res, next) => {
             pseudo
         }).select("+password")
         if (!user) {
-            return next(new ErrorResponse("Invalid credentials", 404))
+            return next(new ErrorResponse("Identifiants incorrects", httpStatusCodes.UNAUTHORIZED))
         }
 
         const isMatched = await user.checkPassword(password)
         if (!isMatched) {
-            return next(new ErrorResponse("Invalid credentials", 404))
+            return next(new ErrorResponse("Identifiants incorrects", httpStatusCodes.UNAUTHORIZED))
         }
         logging('info', base, null, `User ${user.pseudo} is logged in`);
-        sendToken(user, 200, res)
+        sendToken(user, httpStatusCodes.OK, res)
 
     } catch (error) {
-        return next(new ErrorResponse(error.message, 500))
+        return next(new ErrorResponse(error.message, httpStatusCodes.INTERNAL_SERVER_ERROR))
     }
 }
 
