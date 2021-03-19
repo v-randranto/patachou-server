@@ -7,6 +7,7 @@ const {
 const {
     base
 } = require('path').parse(__filename);
+const crypto = require('crypto')
 const httpStatusCodes = require('../constants/httpStatusCodes.json');
 const emailContent = require('../constants/email.json')
 const toTitleCase = require('../utils/titleCase');
@@ -92,15 +93,12 @@ exports.forgotPassword = async (req, res, next) => {
             httpStatusCodes.BAD_REQUEST))
     }
     try {
-        console.log("try pour findOne")
         const user = await User.findOne({email}).select("+password")
-        console.log("user", user)
         if (!user) {
             return next(new ErrorResponse("Email non envoyé", httpStatusCodes.NOT_FOUND))
         }
 
         const resetToken = user.getResetPasswordToken()        
-        
         await user.save()
         const resetUrl = `${frontUrl}/reset-password/${resetToken}`
 
@@ -123,7 +121,7 @@ exports.forgotPassword = async (req, res, next) => {
         } catch (error) {
             user.resetPasswordExpire = undefined
             user.resetPasswordToken = undefined
-            user.save()
+            await user.save()
             return next(new ErrorResponse("L'email n'a pu être envoyé", httpStatusCodes.INTERNAL_SERVER_ERROR))
         }
 
@@ -132,8 +130,39 @@ exports.forgotPassword = async (req, res, next) => {
     }
 }
 
-exports.resetPassword = (req, res, next) => {
+exports.resetPassword = async (req, res, next) => {
     logging('info', base, null, 'Starting resetting password...');
+
+    const { password } = req.body
+    const {resetToken} = req.params
+    if (!password || !resetToken) {
+        return next(new ErrorResponse("Mauvaise requête: mot de passe ou token réinit manquant",
+            httpStatusCodes.BAD_REQUEST))
+    }
+
+    const cryptedResetToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex")
+
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: cryptedResetToken,
+            resetPasswordExpire: {$gt: Date.now()}
+        })
+
+        if (!user) {
+            next( new ErrorResponse("Invalid reset token", httpStatusCodes.BAD_REQUEST))
+        }
+
+        user.password = password
+        user.resetPasswordToken = undefined
+        user.resetPasswordExpire = undefined
+        await user.save()
+        res.status(httpStatusCodes.OK).json({
+            succes: true,
+            data: "Password reset" 
+        })
+    } catch (error) {
+        next(error)
+    }
 
 }
 

@@ -8,7 +8,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const sendEmail = (options, template, variables) => {
-  console.log("variables", variables)
   let success = true;
   const transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE,

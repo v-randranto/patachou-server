@@ -52,14 +52,20 @@ UserSchema.pre("save", async function (next) {
   if (!this.isModified) {
     next()
   }
-  const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password, salt)
 
-  if (this.photo) {
-    this.storePhoto(this.photo.content)
-  } else {
-    this.photo = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash(this.password, salt)
   }
+  
+  if (!this.isModified("photo")) {
+    if (this.photo) {
+      this.storePhoto(this.photo.content)
+    } else {
+      this.photo = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`]
+    }
+  }
+  
   next()
 })
 
