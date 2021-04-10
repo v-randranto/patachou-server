@@ -21,8 +21,13 @@ exports.register = async (req, res, next) => {
         password,
         photo,
         presentation
-    } = req.body.profile
-    const photoUrl = photo.content
+    } = req.body.account
+
+    let photoUrl = null
+    if (photo) {
+        ({photoUrl} = photo.content)
+    }
+    
     logging('info', base, null, `Start registering account ${pseudo} ${email}`);
     try {
         const account = await Account.create({
