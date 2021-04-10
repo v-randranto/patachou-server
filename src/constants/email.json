@@ -1,10 +1,10 @@
 {
   "REGISTER": {
-    "subject": "Confirmation de votre inscription sur Patachou"
+    "subject": "Confirmation de ton inscription sur Patachou"
   },
 
   "REQUEST": {
-    "subject": "Votre demande d'ajout d'ami sur Patachou"
+    "subject": "Ta demande d'ajout d'ami sur Patachou"
   },
 
   "PASSWORD": {
