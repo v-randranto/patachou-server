@@ -12,20 +12,26 @@ const storePhoto = require('../utils/storePhoto');
 const { getRandomInt } = require('../utils/randomNumber');
 
 const AccountSchema = new mongoose.Schema({
+  accountNo: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   pseudo: {
     type: String,
-    required: [true, 'Le pseudo est obligatoire'],
+    required: true,
     unique: true,
   },
 
   email: {
     type: String,
-    required: [true, "L'email est obligatoire"],
+    required: true,
+    unique: true,
   },
 
   password: {
     type: String,
-    required: [true, 'Le mot de passe est obligatoire'],
+    required: true,
     select: false,
   },
   resetPasswordToken: String,
@@ -62,10 +68,7 @@ AccountSchema.pre('save', async function (next) {
     if (this.photoUrl) {
       this.photoUrl = await storePhoto(this.photoUrl);
     } else {
-      this.photoUrl =
-        process.env[
-          `DEFAULT_AVATAR_${getRandomInt(4)}`
-        ];
+      this.photoUrl = process.env[`DEFAULT_AVATAR_${getRandomInt(4)}`];
     }
   }
   next();

@@ -8,7 +8,7 @@ const { logging } = require('./src/utils/loggingHandler');
 const { base } = require('path').parse(__filename);
 
 // eslint-disable-next-line no-undef
-const port = normalizePort(process.env.PORT || 3001);
+const port = normalizePort(process.env.PORT || 5000);
 const noSession = null;
 app.set('port', port);
 // création du serveur http

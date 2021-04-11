@@ -1,338 +1,76 @@
-'use strict';
-
-/**************************************************************************************
- *
- * Gestion du compte d'un membre:
- * - récupération des données du compte à partir de son id
- * - récupération de plusieurs comptes
- *
- ****************************************************************************************/
-const mongoose = require('mongoose');
+const Recipe = require("../models/Recipe")
+const ErrorResponse = require("../utils/errorResponse")
+const {
+    logging
+} = require('../utils/loggingHandler');
 // eslint-disable-next-line no-undef
-const { base } = require('path').parse(__filename);
+const {
+    base
+} = require('path').parse(__filename);
+
 const httpStatusCodes = require('../constants/httpStatusCodes.json');
-const { logging } = require('../utils/loggingHandler');
-const recipesData = require('../access-data/recipesData');
+const toTitleCase = require('../utils/titleCase');
 
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} param 
- */
-const findRecipes = (req, res, param) => {
-  logging('info', base, null, `Starting finding recipes `);
-  recipesData
-    .find(param)
-    .then((recipes) => {
-      if (recipes.length) {
-        logging(
-          'info',
-          base,
-          null,
-          `${recipes.lentgh} Recipes found !`
-        );
-      } else {
-        logging('info', base, null, `No recipe !`);
-      }
-      res.status(httpStatusCodes.OK).json(recipes);
+const frontUrl = process.env.NODE_ENV === 'production' ? process.env.FRONT_URL : process.env.FRONT_URL_DEV
+
+exports.addRecipe = async (req, res, next) => {
+    const {
+            title,
+            category,
+            realisation,
+            nbOfPeople,
+            ingredients,
+            instructions,
+            toBeCompleted,
+            privacyLevel,
+    } = req.body.recipe
+    const {accountId} = req.body
+
+    let photoUrl = null
+    if (photo) {
+        ({photoUrl} = photo.content)
+    }
+    
+    logging('info', base, null, `Start adding recip`);
+    try {
+        const recipe = await Recipe.create({
+            accountId,
+            title,
+            realisation,
+            category,
+            ingredients,
+            instructions,
+            nbOfPeople,
+            privacyLevel,
+            toBeCompleted
+        })
+        logging('info', base, null, `Recipe ${title} is registered`);
+
+        res.status(httpStatusCodes.OK).json({
+            data: "Recipe created"
+        })
+    } catch (error) {
+        logging('error', base, null, JSON.stringify(error));
+        next(error)
+    }
+}
+
+exports.getAccountRecipes = async (req, res, next) => {
+
+    const accountId = req.params.id
+    logging('info', base, null, `Starting getting recipe for account id`, accountId)
+    if (!accountId) {
+        return next(new ErrorResponse("Mauvaise requête: accountId manquant", httpStatusCodes.BAD_REQUEST))
+    }
+
+    try {
+        const recipes = await Recipe.find({ accountId })
+        console.log(recipes)
+    } catch (error) {
+        return next(new ErrorResponse(error.message, httpStatusCodes.INTERNAL_SERVER_ERROR))
+    }
+    res.status(httpStatusCodes.OK).json({
+        data: recipes
     })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `Getting recipes with query ${param} failed ! `,
-        JSON.stringify(error)
-      );
-      res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-    });
-};
 
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} param 
- */
-const findOneRecipe = (req, res, param) => {
-  logging('info', base, null, `Starting finding one recipe`);
-  recipesData
-    .findOne(param)
-    .then((recipe) => {
-      if (recipe) {
-        logging('info', base, null, `Recipe found !`);
-      } else {
-        logging('info', base, null, `No recipe !`);
-      }
-      res.status(httpStatusCodes.OK).json(recipe);
-    })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `Getting recipes with query ${param} failed ! `,
-        JSON.stringify(error)
-      );
-      res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-    });
-};
-
-/**
- * Consulter des comptes
- * @param {*} req 
- * @param {*} res 
- */
-exports.getRecipes = (req, res) => {
-  logging('info', base, null, `Starting getting recipes `);
-
-  const param = {
-    fields: '_id title privacyLevel',
-  };
-
-  findRecipes(req, res, param);
-};
-
-exports.getAccountRecipes = (req, res) => {
-  logging('info', base, null, `Starting getting recipes of account`, req.params.id);
-
-  const param = {
-    query: { accountId: req.params.id },
-    fields: '_id title privacyLevel',
-  };
-
-  findRecipes(req, res, param);
-};
-
-/**
- * Consulter un compte
- * @param {*} req 
- * @param {*} res 
- */
-exports.getOneRecipe = (req, res) => {
-  console.log('req.params', req.params.id);
-  logging('info', base, null, `Starting getting recipe `);
-
-  const param = {
-    query: { _id: req.params.id }
-  };
-
-  findOneRecipe(req, res, param);
-};
-
-/**
- * Recherche de comptes
- * @param {*} req 
- * @param {*} res 
- */
-exports.searchRecipes = (req, res) => {
-  logging(
-    'info',
-    base,
-    null,
-    `Starting search recipes with ${JSON.stringify(req.query)}`
-  );
-
-  // terme à rechercher
-  const termRegex = {
-    $regex: req.query.term,
-    $options: 'i',
-  };
-
-  // paramètres de la requête de recherche de comptes
-  const param = {
-    query: { pseudo: termRegex },
-    fields: '_id pseudo email presentation creationDate modificationDate isAdmin',
-  };
-
-  findRecipes(req, res, param);
-};
-
-/**
- * Modification d'un compte
- * @param {*} req 
- * @param {*} res 
- */
-exports.updateRecipe = async (req, res) => {
-  if (!req.params || !req.body || !req.params.id) {
-    logging('error', base, null, 'Bad request on update recipe');
-    res.status(httpStatusCodes.BAD_REQUEST).end();
-  }
-
-  logging(
-    'info',
-    base,
-    null,
-    'Starting updating recipe',
-    JSON.stringify(req.params.id)
-  );
-
-  // statut de la mise à jour
-  const updateStatus = {
-    save: false,
-    recipe: null,
-  };
-
-  // paramétrage de la requête mongo pour la mise àjour
-  const paramUpdate = {
-    query: { _id: req.params.id },
-    fields: null,
-  };
-
-  // objet contant les champs à modifier
-  const updateRecipe = {
-    modificationDate: new Date(),
-  };
-
-  // Alimentation du compte de modification avec les champs à modifier
-  await (() => {
-    return new Promise((resolve, reject) => {
-      try {
-        for (let [key, value] of Object.entries(req.body)) {
-          updateRecipe[key] = value;
-        }
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  })()
-    .then(() => {
-      paramUpdate.fields = updateRecipe;
-    })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `consitution of updateRecipe went awry :(`,
-        JSON.stringify(error)
-      );
-    });
-
-
-  // Enregistrement modification du compte
-  await recipesData
-    .update(paramUpdate)
-    .then((recipe) => {
-      if (recipe) {
-        logging(
-          'info',
-          base,
-          null,
-          `Recipe with id ${req.body.id} updated !`
-        );
-        updateStatus.save = true;
-        updateStatus.recipe = recipe;
-      } else {
-        updateStatus.save = false;
-        logging(
-          'info',
-          base,
-          null,
-          `Recipe with id ${req.body.id} not found !`
-        );
-      }
-    })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `updating recipe with id ${req.body.id} failed ! ${error}`
-      );
-      updateStatus.save = false;
-      throw error;
-    });
-
- // Retour client
-  logging(
-    'info',
-    base,
-    null,
-    `Final update status`,
-    JSON.stringify(updateStatus)
-  );
-  if (updateStatus.save) {
-    res.status(httpStatusCodes.CREATED).json(updateStatus);
-  } else {
-    res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-  }
-};
-
-/**
- * Ajout d'un nouveau compte
- * @param {*} req 
- * @param {*} res 
- */
-exports.addRecipe = async (req, res) => {
-  let addStatus = false;
-
-  logging('info', base, null, 'Starting adding new recipe...');
-
-// Ajout et enregistrement nouveau compte
-  await recipesData
-    .addOne(req.body.recipe)
-    .then(() => {
-      logging('info', base, null, 'Adding recipe is successful !');
-      addStatus = true;
-    })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `Adding recipe has failed ! ${error}`
-      );
-    });
-
-   // Retour du résultat au client  
-  logging(
-    'info',
-    base,
-    null,
-    `Final update status`,
-    JSON.stringify(addStatus)
-  );
-  if (addStatus) {
-    res.status(httpStatusCodes.CREATED).json(addStatus);
-  } else {
-    res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-  }
-};
-
-/**
- * Suppression d'un compte
- * @param {*} req 
- * @param {*} res 
- */
-exports.deleteRecipe = (req, res) => {
-  logging(
-    'info',
-    base,
-    null,
-    `Starting deleting recipe with ${JSON.stringify(req.params.id)}`
-  );
-  recipesData
-    .delete(req.params.id)
-    .then((recipe) => {
-      logging(
-        'info',
-        base,
-        null,
-        `${JSON.stringify(recipe)} deleted!`
-      );
-      res.status(httpStatusCodes.OK).json(recipe);
-    })
-    .catch((error) => {
-      logging(
-        'error',
-        base,
-        null,
-        `deleting ${req.params.id} failed ! `,
-        JSON.stringify(error)
-      );
-      res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).end();
-    });
-};
+}

@@ -15,11 +15,14 @@ const connectDB = require('./config/db-config')
 
 const authRouter = require('./routes/auth');
 const privateRouter = require('./routes/private');
+const recipesRouter = require('./routes/recipes');
+
 const errorHandler = require('./middleware/error');
 
-const PATH_STATIC_FILES = 'dist/patachou-client/';
+const PATH_STATIC_FILES = 'build/';
 const AUTH_API_PATH = '/api/auth/';
 const PRIVATE_API_PATH = '/api/private/';
+const RECIPES_API_PATH = '/api/recipes/';
 
 const app = express();
 app.use(helmet());
@@ -38,6 +41,7 @@ app.use((req, res, next) => {
 // routes
 app.use(AUTH_API_PATH, authRouter);
 app.use(PRIVATE_API_PATH, privateRouter);
+app.use(RECIPES_API_PATH, recipesRouter);
 
 app.get('/*', function (req, res) {
   if (process.env.NODE_ENV === 'production') {
